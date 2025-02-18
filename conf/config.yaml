@@ -1,7 +1,6 @@
 name: "bluebell"
 mode: "dev"
-host: "localhost" # 或者 "0.0.0.0"
-port: 8081
+port: 8080
 version: "v0.0.1"
 start_time: "2020-07-01"
 machine_id: 1
@@ -17,7 +16,7 @@ mysql:
   port: 3306
   user: "root"
   password: "123456"
-  dbname: "sql_demo"
+  dbname: "bluebell"
   max_open_conns: 200
   max_idle_conns: 50
 redis:

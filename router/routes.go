@@ -5,6 +5,7 @@ import (
 
 	"github.com/CHLCN/bluebell/controller"
 	"github.com/CHLCN/bluebell/logger"
+	"github.com/CHLCN/bluebell/middlewares"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,8 +19,11 @@ func SetupRouter(mode string) *gin.Engine {
 
 	// 注册业务路由
 	r.POST("/signup", controller.SignUpHandler)
-	r.GET("/ping", func(c *gin.Context) {
+	r.POST("/login", controller.LoginHandler)
+	r.GET("/ping", middlewares.JWTAuthMiddleware(), func(c *gin.Context) {
+		// 如果是登录的用户，判断请求头重是否有 有效的JWT
 		c.String(http.StatusOK, "pong")
+
 	})
 	r.NoRoute(func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{

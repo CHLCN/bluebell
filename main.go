@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/CHLCN/bluebell/controller"
 	"github.com/CHLCN/bluebell/dao/mysql"
@@ -13,6 +14,11 @@ import (
 )
 
 func main() {
+	if len(os.Args) < 2 {
+		fmt.Println("need config file.eg: bluebell config.yaml")
+		return
+	}
+
 	// 1. 加载配置
 	if err := settings.Init(); err != nil {
 		fmt.Printf("init settings failed, err:%v\n", err)

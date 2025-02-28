@@ -36,6 +36,7 @@ func InsertUser(user *models.User) (err error) {
 	return
 }
 
+// encryptPassword 密码加密
 func encryptPassword(oPassword string) string {
 	h := md5.New()
 	h.Write([]byte(secret))
@@ -45,7 +46,7 @@ func encryptPassword(oPassword string) string {
 func Login(user *models.User) (err error) {
 	oPassword := user.Password // 用户登录的密码
 	sqlStr := `select user_id, username, password from user where username=?`
-	db.Get(user, sqlStr, user.Username)
+	err = db.Get(user, sqlStr, user.Username)
 	if err == sql.ErrNoRows {
 		return ErrorUserNotExist
 	}
@@ -58,5 +59,13 @@ func Login(user *models.User) (err error) {
 	if password != user.Password {
 		return ErrorInvalidPassword
 	}
+	return
+}
+
+// GetUserById 根据id获取用户信息
+func GetUserById(uid int64) (user *models.User, err error) {
+	user = new(models.User)
+	sqlStr := `select user_id, username from user where user_id = ?`
+	db.Get(user, sqlStr, uid)
 	return
 }

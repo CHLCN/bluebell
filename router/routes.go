@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/CHLCN/bluebell/controller"
 	"github.com/CHLCN/bluebell/logger"
@@ -15,7 +16,10 @@ func SetupRouter(mode string) *gin.Engine {
 	}
 
 	r := gin.New()
-	r.Use(logger.GinLogger(), logger.GinRecovery(true))
+	r.Use(logger.GinLogger(), logger.GinRecovery(true), middlewares.RateLimitMiddleware(2*time.Second, 1))
+	r.GET("/ping", func(c *gin.Context) {
+		c.String(http.StatusOK, "pong")
+	})
 
 	v1 := r.Group("/api/v1")
 

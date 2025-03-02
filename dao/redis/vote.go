@@ -3,6 +3,7 @@ package redis
 import (
 	"errors"
 	"math"
+	"strconv"
 	"time"
 
 	"github.com/go-redis/redis"
@@ -24,7 +25,7 @@ direction=-1时，有两种情况：
 投票的限制：
 每个帖子自发表日起一个星期内允许用户投票，超过一周则不允许投票
 	1. 到期之后将redis中保存的赞成票数及反对票数存储到mysql表中
-	2. 到期之后删除 KeyPostVotedZSetPf
+	2. 到期之后删除 KeyPostVotedZSetPF
 */
 
 const (
@@ -34,9 +35,10 @@ const (
 
 var (
 	ErrVoteTimeExipre = errors.New("投票时间已过")
+	ErrVoteRepeated   = errors.New("不允许重复投票")
 )
 
-func CreatePost(postID int64) error {
+func CreatePost(postID, communityID int64) error {
 
 	pipeline := client.TxPipeline()
 	// 帖子时间
@@ -49,6 +51,9 @@ func CreatePost(postID int64) error {
 		Score:  float64(time.Now().Unix()),
 		Member: postID,
 	})
+	// 把帖子id加到社区的set
+	cKey := getRedisKey(KeyCommunitySetPF + strconv.Itoa(int(communityID)))
+	pipeline.SAdd(cKey, postID)
 	_, err := pipeline.Exec()
 	return err
 }
@@ -63,7 +68,12 @@ func VoteForPost(userID, postID string, value float64) error {
 	// 2和3需要放到一个pipeline事务中操作
 	// 2. 更新帖子的分数
 	// 先查当前用户给当前帖子的投票记录
-	ov := client.ZScore(getRedisKey(KeyPostVotedZSetPf+postID), userID).Val()
+	ov := client.ZScore(getRedisKey(KeyPostVotedZSetPF+postID), userID).Val()
+
+	// 如果这一次投票的值和之前保持的值一致，就提示不允许重复投票
+	if value == ov {
+		return ErrVoteRepeated
+	}
 	var op float64
 	if value > ov {
 		op = 1
@@ -76,9 +86,9 @@ func VoteForPost(userID, postID string, value float64) error {
 	pipeline.ZIncrBy(getRedisKey(KeyPostScoreZSet), op*diff*scorePerVote, postID)
 	// 3. 记录用户为该帖子投票的数据
 	if value == 0 {
-		pipeline.ZRem(getRedisKey(KeyPostVotedZSetPf+postID), postID)
+		pipeline.ZRem(getRedisKey(KeyPostVotedZSetPF+postID), postID)
 	} else {
-		pipeline.ZAdd(getRedisKey(KeyPostVotedZSetPf+postID), redis.Z{
+		pipeline.ZAdd(getRedisKey(KeyPostVotedZSetPF+postID), redis.Z{
 			Score:  value, // 赞成票或反对票
 			Member: userID,
 		})

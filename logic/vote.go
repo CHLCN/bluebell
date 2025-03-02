@@ -27,7 +27,7 @@ direction=-1时，有两种情况：
 投票的限制：
 每个帖子自发表日起一个星期内允许用户投票，超过一周则不允许投票
 	1. 到期之后将redis中保存的赞成票数及反对票数存储到mysql表中
-	2. 到期之后删除 KeyPostVotedZSetPf
+	2. 到期之后删除 KeyPostVotedZSetPF
 */
 
 // VoteForPost 为帖子投票的函数
